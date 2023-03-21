@@ -9,14 +9,14 @@ from django.db.backends import utils
 from django.db.utils import DatabaseError
 from django.utils.functional import cached_property
 from django.utils import timezone
-from django.utils.encoding import force_bytes, force_text
+from django.utils.encoding import force_bytes, force_str
 from firebird.driver import CHARSET_MAP
 
 from .base import Database
 
 
 class DatabaseOperations(BaseDatabaseOperations):
-    compiler_module = "firebird.compiler"
+    compiler_module = "django.db.backends.firebird.compiler"
 
     # Integer field safe ranges by `internal_type` as documented
     # in docs/ref/models/fields.txt.
@@ -284,9 +284,9 @@ class DatabaseOperations(BaseDatabaseOperations):
                 if connection.get_connection_params()['charset'] in CHARSET_MAP:
                     db_charset = CHARSET_MAP[connection.get_connection_params()['charset']]
             if db_charset:
-                value = force_text(value, encoding=db_charset, errors='replace')
+                value = force_str(value, encoding=db_charset, errors='replace')
             else:
-                value = force_text(value)
+                value = force_str(value)
         return value
 
     def convert_binaryfield_value(self, value, expression, connection):
