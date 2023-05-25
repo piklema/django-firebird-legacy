@@ -11,7 +11,7 @@ from django.db.models.fields import AutoField, CharField, BinaryField
 from django.db.backends.base.schema import BaseDatabaseSchemaEditor
 from django.db.backends.base.schema import _related_non_m2m_objects, _is_relevant_relation
 
-from firebird.driver import transaction
+from fdb import TransactionContext
 
 logger = logging.getLogger('django.db.backends.schema')
 
@@ -49,7 +49,7 @@ class DatabaseSchemaEditor(BaseDatabaseSchemaEditor):
     sql_create_unique_hash_index = "CREATE UNIQUE INDEX %(name)s ON %(table)s computed by(hash(%(columns)s))"
 
     def _alter_column_set_null(self, table_name, column_name, is_null):
-        engine_ver = str(self.connection.connection.info.engine_version).split('.')
+        engine_ver = str(self.connection.connection.engine_version).split('.')
         if engine_ver and len(engine_ver) > 0 and int(engine_ver[0]) >= 3:
             sql = """
                 ALTER TABLE \"%(table_name)s\"
@@ -140,7 +140,7 @@ class DatabaseSchemaEditor(BaseDatabaseSchemaEditor):
                 self.execute(self._delete_constraint_sql(self.sql_delete_index, model, result))
         # Created uniques
         for fields in news.difference(olds):
-            columns = [model._meta.get_field(field) for field in fields]
+            columns = [model._meta.get_field(field).column for field in fields]
             create_statement = self._create_unique_sql(model, columns)
             self.create_unique(create_statement)
 
@@ -162,11 +162,13 @@ class DatabaseSchemaEditor(BaseDatabaseSchemaEditor):
         """
         try:
             self.execute(create_statement)
+        except (AttributeError, TypeError):
+            raise
         except Exception as e:
             # If the creation of the unique failed with
             # the error 'key size too big for index',
             # then create an unique index with hash expression
-            cols = ' || '.join(self.quote_name(column) for column in create_statement.parts['columns'].columns)
+            cols = [self.quote_name(column.name) for column in create_statement.parts['columns'].columns]
             create_statement.template = self.sql_create_unique_hash_index
             create_statement.parts['columns'] = cols
             self.execute(create_statement, params=None)
@@ -809,7 +811,7 @@ class DatabaseSchemaEditor(BaseDatabaseSchemaEditor):
             connection=self.connection,
         )
         tablespace_sql = self._get_index_tablespace_sql(model, fields, db_tablespace=db_tablespace)
-        columns = [field.column for field in fields]
+        columns = [getattr(field, "column", field) for field in fields]
         sql_create_index = sql or self.sql_create_index
         table = model._meta.db_table
 
@@ -953,7 +955,7 @@ class DatabaseSchemaEditor(BaseDatabaseSchemaEditor):
             self._field_indexes_sql(model, field)
 
         for field_names in model._meta.index_together:
-            fields = [model._meta.get_field(field) for field in field_names]
+            fields = [model._meta.get_field(field).column for field in field_names]
             create_statement = self._create_index_sql(model, fields=fields, suffix="_idx")
             self.create_index(create_statement)
 
@@ -1033,10 +1035,10 @@ class DatabaseSchemaEditor(BaseDatabaseSchemaEditor):
         logger.debug("%s; (params %r)", sql, params, extra={'params': params, 'sql': sql})
         if self.connection.features.autocommits_when_autocommit_is_off:
             for tr in self.connection.connection.transactions:
-                if tr.is_active():
+                if tr.active:
                     tr.commit()
             # Transaction Context Manager automatically commit statement
-            with transaction(self.connection.connection.transaction_manager()) as tr:
+            with TransactionContext(self.connection.connection.trans()) as tr:
                 try:
                     cur = tr.cursor()
                     cur.execute(str(sql), params)
