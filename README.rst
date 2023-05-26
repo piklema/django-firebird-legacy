@@ -1,13 +1,11 @@
 ===============
-django-firebird
+django-firebird-legacy
 ===============
 
-.. image:: https://img.shields.io/pypi/v/django-firebird.svg
-    :target: https://pypi.python.org/pypi/django-firebird
-
-
-Firebird SQL backend for django
+Firebird SQL legacy (2.5) backend for django >= 4
 -------------------------------
+
+This is a fork of django-firebird database backend that allows to work with old firebird versions (2.x) with new versions of a django.
 
 **Repo Note**:
 The ``master`` branch is an *in development* version of django-firebird. This may be substantially different from the latest
@@ -29,7 +27,7 @@ the branch list of this repository.
 Requirements
 ------------
   * Python 3.x
-  * Django 2.2.x
+  * Django 4.1.x
   * fdb (http://pypi.python.org/pypi/fdb/)
 
 Installation
