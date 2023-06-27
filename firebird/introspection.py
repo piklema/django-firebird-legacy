@@ -19,7 +19,6 @@ class DatabaseIntrospection(BaseDatabaseIntrospection):
         13: 'TimeField',
         14: 'CharField',
         16: 'BigIntegerField',
-        23: 'BooleanField', # since firebird 3 boolean fields are supported
         27: 'FloatField',
         35: 'DateTimeField',
         37: 'CharField',

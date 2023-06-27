@@ -8,5 +8,7 @@ standard_exclude_directories = ('.*', 'CVS', '_darcs', './build', './dist', 'EGG
 
 setup(
     packages=find_packages(),
-    install_requires=[],
+    install_requires=[
+        "fdb==2.0.2",
+        ],
 )

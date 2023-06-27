@@ -3,13 +3,13 @@ Firebird database backend for Django.
 """
 
 try:
-    import firebird.driver as Database
+    import fdb as Database
 except ImportError as e:
     from django.core.exceptions import ImproperlyConfigured
 
     raise ImproperlyConfigured("Error loading firebird driver: %s" % e)
 
-from firebird.driver import CHARSET_MAP
+from fdb import charset_map
 
 from django.db import utils
 from django.db.backends.base.base import BaseDatabaseWrapper
@@ -47,7 +47,7 @@ class DatabaseWrapper(BaseDatabaseWrapper):
         'AutoField': 'integer',
         'BigAutoField': 'bigint',
         'BinaryField': 'blob sub_type 0',
-        'BooleanField': 'smallint',  # for firebird 3 it changes in init_connection_state
+        'BooleanField': 'smallint',
         'CharField': 'varchar(%(max_length)s)',
         'CommaSeparatedIntegerField': 'varchar(%(max_length)s)',
         'DateField': 'date',
@@ -61,7 +61,7 @@ class DatabaseWrapper(BaseDatabaseWrapper):
         'BigIntegerField': 'bigint',
         'IPAddressField': 'char(15)',
         'GenericIPAddressField': 'char(39)',
-        'NullBooleanField': 'smallint',  # for firebird 3 it changes in init_connection_state
+        'NullBooleanField': 'smallint',
         'OneToOneField': 'integer',
         'PositiveIntegerField': 'integer',
         'PositiveSmallIntegerField': 'smallint',
@@ -74,7 +74,7 @@ class DatabaseWrapper(BaseDatabaseWrapper):
     }
 
     data_type_check_constraints = {
-        'BooleanField': '%(qn_column)s IN (0,1)',  # for firebird 3 it changes in init_connection_state
+        'BooleanField': '%(qn_column)s IN (0,1)',
         'NullBooleanField': '(%(qn_column)s IN (0,1)) OR (%(qn_column)s IS NULL)',
         'PositiveIntegerField': '%(qn_column)s >= 0',
         'PositiveSmallIntegerField': '%(qn_column)s >= 0',
@@ -138,7 +138,7 @@ class DatabaseWrapper(BaseDatabaseWrapper):
         self.encoding = None
 
         opts = self.settings_dict["OPTIONS"]
-        RC = Database.core.TraIsolation.READ_COMMITTED
+        RC = Database.fbcore.ISOLATION_LEVEL_READ_COMMITED
         self.isolation_level = opts.get('isolation_level', RC)
 
         self.features = DatabaseFeatures(self)
@@ -176,7 +176,7 @@ class DatabaseWrapper(BaseDatabaseWrapper):
         conn_params.update(options)
 
         self._db_charset = conn_params.get('charset')
-        self.encoding = CHARSET_MAP.get(self._db_charset, 'utf_8')
+        self.encoding = charset_map.get(self._db_charset, 'utf_8')
 
         return conn_params
 
@@ -186,19 +186,12 @@ class DatabaseWrapper(BaseDatabaseWrapper):
         return Database.connect(**conn_params)
 
     def init_connection_state(self):
-        """Initializes the database connection settings."""
-        if int(self.ops.firebird_version[3]) >= 3:
-            self.data_types['BooleanField'] = 'boolean'
-            self.data_types['NullBooleanField'] = 'boolean'
-            self.data_type_check_constraints['BooleanField'] = '%(qn_column)s IN (False,True)'
-            self.data_type_check_constraints[
-                'NullBooleanField'] = '(%(qn_column)s IN (False,True)) OR (%(qn_column)s IS NULL)'
-        if int(self.ops.firebird_version[3]) >= 4:
-            self.features.supports_timezones = True
+        """Initializes the firebird database connection settings."""
+        pass
 
     def create_cursor(self, name=None):
         """Creates a cursor. Assumes that a connection is established."""
-        if self.connection.is_closed():
+        if self.connection and self.connection.closed:
             raise InterfaceError("Cannot create cursor for closed connection")
         cursor = self.connection.cursor()
         return FirebirdCursorWrapper(cursor, self.encoding)
@@ -206,13 +199,13 @@ class DatabaseWrapper(BaseDatabaseWrapper):
     def _commit(self):
         if self.connection is not None:
             with self.wrap_database_errors:
-                if self.connection.main_transaction.is_active():
+                if self.connection.main_transaction.active:
                     return self.connection.commit()
 
     def _rollback(self):
         if self.connection is not None:
             with self.wrap_database_errors:
-                if self.connection.main_transaction.is_active():
+                if self.connection.main_transaction.active:
                     return self.connection.rollback()
 
     # ##### Foreign key constraints checks handling #####
@@ -535,7 +528,7 @@ class DatabaseWrapper(BaseDatabaseWrapper):
     def _close(self):
         if self.connection is not None:
             with self.wrap_database_errors:
-                if self.autocommit and self.connection.main_transaction.is_active():
+                if self.autocommit and self.connection.main_transaction.active:
                     self.connection.commit()
                 return self.connection.close()
 
@@ -564,7 +557,7 @@ class DatabaseWrapper(BaseDatabaseWrapper):
         if not self._server_version:
             if not self.connection:
                 self.cursor()
-            self._server_version = self.connection.info.server_version
+            self._server_version = self.connection.server_version
         return self._server_version
 
 

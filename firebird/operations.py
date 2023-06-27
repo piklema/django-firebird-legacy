@@ -7,10 +7,11 @@ from django.conf import settings
 from django.db.backends.base.operations import BaseDatabaseOperations
 from django.db.backends import utils
 from django.db.utils import DatabaseError
+from django.db.models import ForeignKey
 from django.utils.functional import cached_property
 from django.utils import timezone
-from django.utils.encoding import force_bytes, force_text
-from firebird.driver import CHARSET_MAP
+from django.utils.encoding import force_bytes, force_str
+from fdb import charset_map as CHARSET_MAP
 
 from .base import Database
 
@@ -21,15 +22,15 @@ class DatabaseOperations(BaseDatabaseOperations):
     # Integer field safe ranges by `internal_type` as documented
     # in docs/ref/models/fields.txt.
     integer_field_ranges = {
-        'SmallIntegerField': (Database.core.SHRT_MIN, Database.core.SHRT_MAX),
-        'IntegerField': (Database.core.INT_MIN, Database.core.INT_MAX),
-        'BigIntegerField': (Database.core.LONG_MIN, Database.core.LONG_MAX),
-        'PositiveBigIntegerField': (0, Database.core.LONG_MAX),
-        'PositiveSmallIntegerField': (0, Database.core.SHRT_MAX),
-        'PositiveIntegerField': (0, Database.core.INT_MAX),
-        'AutoField': (Database.core.INT_MIN, Database.core.INT_MAX), # since firebird 3 AutoField
-        'BigAutoField': (Database.core.LONG_MIN, Database.core.LONG_MAX), # and BigAutoField are supported
-        'SmallAutoField': (Database.core.SHRT_MIN, Database.core.SHRT_MAX), # and SmallAutoField are supported
+        'SmallIntegerField': (Database.SHRT_MIN, Database.fbcore.SHRT_MAX),
+        'IntegerField': (Database.INT_MIN, Database.fbcore.INT_MAX),
+        'BigIntegerField': (Database.LONG_MIN, Database.fbcore.LONG_MAX),
+        'PositiveBigIntegerField': (0, Database.fbcore.LONG_MAX),
+        'PositiveSmallIntegerField': (0, Database.fbcore.SHRT_MAX),
+        'PositiveIntegerField': (0, Database.fbcore.INT_MAX),
+        'AutoField': (Database.INT_MIN, Database.fbcore.INT_MAX), # since firebird 3 AutoField
+        'BigAutoField': (Database.LONG_MIN, Database.fbcore.LONG_MAX), # and BigAutoField are supported
+        'SmallAutoField': (Database.SHRT_MIN, Database.fbcore.SHRT_MAX), # and SmallAutoField are supported
     }
 
     def __init__(self, connection, *args, **kwargs):
@@ -275,7 +276,7 @@ class DatabaseOperations(BaseDatabaseOperations):
         return converters
 
     def convert_textfield_value(self, value, expression, connection):
-        if isinstance(value, Database.core.BlobReader):
+        if isinstance(value, Database.BlobReader):
             value = value.read()
         if value is not None:
             db_charset = None
@@ -284,9 +285,9 @@ class DatabaseOperations(BaseDatabaseOperations):
                 if connection.get_connection_params()['charset'] in CHARSET_MAP:
                     db_charset = CHARSET_MAP[connection.get_connection_params()['charset']]
             if db_charset:
-                value = force_text(value, encoding=db_charset, errors='replace')
+                value = force_str(value, encoding=db_charset, errors='replace')
             else:
-                value = force_text(value)
+                value = force_str(value)
         return value
 
     def convert_binaryfield_value(self, value, expression, connection):

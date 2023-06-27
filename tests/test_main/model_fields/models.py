@@ -39,12 +39,12 @@ class Whiz(models.Model):
             (1, 'First'),
             (2, 'Second'),
         )
-        ),
+         ),
         ('Group 2', (
             (3, 'Third'),
             (4, 'Fourth'),
         )
-        ),
+         ),
         (0, 'Other'),
         (5, _('translated')),
     )
@@ -136,7 +136,6 @@ class Post(models.Model):
 
 class NullBooleanModel(models.Model):
     nbfield = models.BooleanField(null=True, blank=True)
-    nbfield_old = models.NullBooleanField()
 
 
 class BooleanModel(models.Model):
@@ -193,7 +192,7 @@ class VerboseNameField(models.Model):
     # field_image = models.ImageField("verbose field")
     field11 = models.IntegerField("verbose field11")
     field12 = models.GenericIPAddressField("verbose field12", protocol="ipv4")
-    field13 = models.NullBooleanField("verbose field13")
+    # field13 = models.NullBooleanField("verbose field13")
     field14 = models.PositiveIntegerField("verbose field14")
     field15 = models.PositiveSmallIntegerField("verbose field15")
     field16 = models.SlugField("verbose field16")
@@ -222,12 +221,14 @@ class DecimalLessThanOne(models.Model):
 class FieldClassAttributeModel(models.Model):
     field_class = models.CharField
 
+
 ###############################################################################
 
 
 class DataModel(models.Model):
     short_data = models.BinaryField(max_length=10, default=b'\x08')
     data = models.BinaryField()
+
 
 ###############################################################################
 # FileField
@@ -247,6 +248,7 @@ if Image:
         Custom Field File class that records whether or not the underlying file
         was opened.
         """
+
         def __init__(self, *args, **kwargs):
             self.was_opened = False
             super().__init__(*args, **kwargs)
@@ -255,13 +257,16 @@ if Image:
             self.was_opened = True
             super().open()
 
+
     class TestImageField(models.ImageField):
         attr_class = TestImageFieldFile
+
 
     # Set up a temp directory for file storage.
     temp_storage_dir = tempfile.mkdtemp()
     temp_storage = FileSystemStorage(temp_storage_dir)
     temp_upload_to_dir = os.path.join(temp_storage.location, 'tests')
+
 
     class Person(models.Model):
         """
@@ -269,6 +274,7 @@ if Image:
         """
         name = models.CharField(max_length=50)
         mugshot = TestImageField(storage=temp_storage, upload_to='tests')
+
 
     class AbstractPersonWithHeight(models.Model):
         """
@@ -283,12 +289,14 @@ if Image:
         class Meta:
             abstract = True
 
+
     class PersonWithHeight(AbstractPersonWithHeight):
         """
         Concrete model that subclass an abstract one with only on dimension
         field.
         """
         name = models.CharField(max_length=50)
+
 
     class PersonWithHeightAndWidth(models.Model):
         """
@@ -301,6 +309,7 @@ if Image:
         mugshot_height = models.PositiveSmallIntegerField()
         mugshot_width = models.PositiveSmallIntegerField()
 
+
     class PersonDimensionsFirst(models.Model):
         """
         Model that defines height and width fields before the ImageField.
@@ -311,6 +320,7 @@ if Image:
         mugshot = TestImageField(storage=temp_storage, upload_to='tests',
                                  height_field='mugshot_height',
                                  width_field='mugshot_width')
+
 
     class PersonTwoImages(models.Model):
         """
@@ -386,7 +396,7 @@ class AllFieldsModel(models.Model):
     floatf = models.FloatField()
     integer = models.IntegerField()
     generic_ip = models.GenericIPAddressField()
-    null_boolean = models.NullBooleanField()
+    null_boolean = models.BooleanField(null=True)
     positive_integer = models.PositiveIntegerField()
     positive_small_integer = models.PositiveSmallIntegerField()
     slug = models.SlugField()

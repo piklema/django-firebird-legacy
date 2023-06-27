@@ -1,67 +1,30 @@
 ===============
-django-firebird
+django-firebird-legacy
 ===============
 
-.. image:: https://img.shields.io/pypi/v/django-firebird.svg
-    :target: https://pypi.python.org/pypi/django-firebird
-
-
-Firebird SQL backend for django
+Firebird SQL legacy (2.X) backend for django >= 4
 -------------------------------
 
-**Repo Note**:
-The ``master`` branch is an *in development* version of django-firebird. This may be substantially different from the latest
-`release of django-firebird`_
+This is a **FORK** of django-firebird (https://github.com/maxirobaina/django-firebird) database backend that allows to work with old firebird versions (2.x) with newer versions of a django (4.x).
 
-.. _release of django-firebird: https://github.com/maxirobaina/django-firebird/releases
+This version is based on this work https://github.com/maxirobaina/django-firebird/pull/134 but firebird driver is reverted to older version as newer firebird-driver does not support firebird 2.x.
 
-
-This version of django-firebird is working with *fbd* [1], therefore it will work only with firebird 2.x and later.
-The stable version corresponds with django 2.2 and live into ``stable/2.2.x`` branch.
-The current master branch of this repository is being developed under django 3.x. For previous Django stable version check
-the branch list of this repository.
-*fbd* is the official stable python-firebird driver, also it has support for python 3.
-
-
-[1] http://pypi.python.org/pypi/fdb/
+This version of django-firebird-legacy is working with old *fbd* (https://pypi.org/project/fdb/) driver instead of newer *firebird-driver* (https://github.com/FirebirdSQL/python3-base), therefore it will work only with firebird 2.x.
+The current master branch of this repository is being developed under django 4.x.
 
 
 Requirements
 ------------
   * Python 3.x
-  * Django 2.2.x
-  * fdb (http://pypi.python.org/pypi/fdb/)
+  * Django 4.x
+  * fdb (https://pypi.python.org/pypi/fdb/)
 
 Installation
 ------------
 
-**Using pip**
+**Using pip from git repository**
 
-    pip install django-firebird
-
-**From repository**
-
-    git clone git://github.com/maxirobaina/django-firebird.git
-
-    cd django-firebird
-
-    sudo python setup.py install
-
-**Manual Installation**
-
-Instructions for Ubuntu/Debian
-I assume you have installed django from source with python setup.py install
-
-
-    cd /usr/local/lib/python3.8/dist-packages
-
-    sudo git clone git://github.com/maxirobaina/django-firebird.git
-
-    sudo ln -s django-firebird/firebird firebird
-
-    cd /usr/local/lib/python3.8/dist-packages/django/db/backends
-
-    sudo ln -s /usr/local/lib/python3.8/dist-packages/django-firebird/firebird
+  pip install git+https://github.com/piklema/django-firebird-legacy
 
 Configuration
 -------------
@@ -76,7 +39,7 @@ Modify your setting.py ::
             'PASSWORD' : '*****',    # db user password
             'HOST' : '127.0.0.1',        # Your host machine
             'PORT' : '3050',             # If is empty, use default 3050
-            #'OPTIONS' : {'charset':'ISO8859_1'}
+            'OPTIONS' : {'charset':'ISO8859_1'}
         }
     }
 
@@ -93,8 +56,5 @@ Contributing
 
 Code and issues is in GitHub:
 
-    https://github.com/maxirobaina/django-firebird
+    https://github.com/piklema/django-firebird-legacy
 
-We also have a mailing list:
-
-    http://groups.google.com/group/django-firebird-dev
