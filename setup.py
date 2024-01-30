@@ -10,5 +10,6 @@ setup(
     packages=find_packages(),
     install_requires=[
         "fdb==2.0.2",
+        'django>=4,<5'
         ],
 )
